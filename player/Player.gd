@@ -18,7 +18,7 @@ const S_RUN = 1
 const S_LAND = 4
 const S_JUMP = 2
 const S_FALL = 3
-const  = 5
+const S_WALL = 5
 const S_DASH = 6
 
 # -------------
@@ -31,14 +31,16 @@ var velocity = Vector2(0.0,0.0)
 
 const MAX_SPEED = 800
 const ACCELERATION_X = 1500
+const ACCELERATION_X_JUMP = 2000
 const DECCELERATION_X = 3000
 const SQRT_2 = Vector2(sqrt(2), sqrt(2))
 
-const JUMP_POWER = 800
-const GRAVITY = 800
+const JUMP_IMPULSE = 700
+const GRAVITY = 600
 const FRICTION_FLOOR = 800
 const FRICTION_WALL = 600
 const MAX_SPEED_FALL = 800
+const MAX_SPEED_JUMP = 800
 
 const MAX_SPEED_WALK = 800
 const MAX_SPEED_RUN = 800
@@ -70,13 +72,20 @@ func _fixed_process(delta):
 	# ENTER AND EXIT STATE
 	if exit_state:
 		exit_state = false
-		if previous_state == S_RUN:
+		if previous_state == S_RUN and state == S_IDLE:
 			speed.x /= 4
+		elif previous_state == S_JUMP and state in [S_IDLE, S_RUN]:
+			on_floor = true
+			on_wall = false
+			speed.y = 0.0
 	if enter_state:
+		if state == S_JUMP:
+			on_floor = false
+			speed.y = -JUMP_IMPULSE
 		enter_state = false
 	
 	
-	# MOVEMENT HORIZONTAL
+	# MOVEMENT HORIZONTAL ON FLOOR
 	# FIXME: Movement lag with Joystick
 	prev_direction = direction
 	if move_right: 
@@ -94,27 +103,35 @@ func _fixed_process(delta):
 			go_to_state(S_IDLE)
 		if direction != prev_direction:
 			speed.x /= 2
-	
-	if state == S_RUN:
-		speed.x += ACCELERATION_X * delta
-	elif state == S_IDLE:
-		speed.x -= DECCELERATION_X * delta
+		if state == S_RUN:
+			speed.x += ACCELERATION_X * delta
+		elif state == S_IDLE:
+			speed.x -= DECCELERATION_X * delta
 	
 	speed.x = clamp(speed.x, 0, MAX_SPEED)
 
 
 	# AIR MOTION
-	if not on_floor and not on_wall:
+	if not on_floor and state in [S_JUMP, S_FALL]:
+		if moving:
+			speed.x += ACCELERATION_X_JUMP * direction * delta
 		speed.y += GRAVITY * delta
-	if state == S_JUMP:
+		speed.y = clamp(speed.y, -MAX_SPEED_JUMP, MAX_SPEED_FALL)
+	if state == S_JUMP and speed.y < 0.0:
+		go_to_state(S_FALL)
 
 	
 	# APPLYING MOVEMENT
-	velocity = speed * direction * delta
+	velocity.x = speed.x * direction * delta
+	velocity.y = speed.y * delta
 	move(velocity)
 
 	if is_colliding():
-		velocity = get_collision_normal().slide(velocity)
+		var normal = get_collision_normal()
+		if not on_floor and normal == Vector2(0, -1):
+			go_to_state(S_IDLE)
+		
+		velocity = slide(velocity)
 		velocity = move(velocity)
 	pass
 
