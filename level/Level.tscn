@@ -20,8 +20,11 @@ transform/pos = Vector2( 353.697, 511.501 )
 transform/rot = -89.9999
 input/pickable = false
 shapes/0/shape = SubResource( 1 )
-shapes/0/transform = Matrix32( 1, 0, 0, 1, -93.7525, 216.196 )
+shapes/0/transform = Matrix32( 1, 0, 0, 1, -93.7525, 213.196 )
 shapes/0/trigger = false
+shapes/1/shape = SubResource( 1 )
+shapes/1/transform = Matrix32( 1, 0, 0, 1, -133.75, -756.804 )
+shapes/1/trigger = false
 collision/layers = 1
 collision/mask = 1
 constant_linear_velocity = Vector2( 0, 0 )
@@ -31,10 +34,17 @@ bounce = 0.0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D"]
 
-transform/pos = Vector2( -93.7525, 216.196 )
+transform/pos = Vector2( -93.7525, 213.196 )
 shape = SubResource( 1 )
 trigger = false
 _update_shape_index = 0
+
+[node name="CollisionShape2D1" type="CollisionShape2D" parent="StaticBody2D"]
+
+transform/pos = Vector2( -133.75, -756.804 )
+shape = SubResource( 1 )
+trigger = false
+_update_shape_index = 1
 
 [node name="StaticBody2D2" type="StaticBody2D" parent="."]
 
