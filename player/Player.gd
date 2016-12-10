@@ -29,30 +29,34 @@ var prev_direction = 1
 var speed = Vector2(0.0,0.0)
 var velocity = Vector2(0.0,0.0)
 
-const MAX_SPEED = 800
-const ACCELERATION_X = 1500
-const ACCELERATION_X_JUMP = 2000
-const DECCELERATION_X = 3000
+const MAX_SPEED = 500
+const ACCELERATION_X = 2000
+const ACCELERATION_X_JUMP = 3000
+const DECCELERATION_X = 2000
 const SQRT_2 = Vector2(sqrt(2), sqrt(2))
 
 const JUMP_IMPULSE = 700
-const GRAVITY = 600
+const GRAVITY = 2000
 const FRICTION_FLOOR = 800
 const FRICTION_WALL = 600
 const MAX_SPEED_FALL = 800
 const MAX_SPEED_JUMP = 800
+const STOP_THRESHOLD = 30
 
 const MAX_SPEED_WALK = 800
 const MAX_SPEED_RUN = 800
 
 const MAX_SPEED_WALL_SLIDE = 200
 
-var on_floor = true
+var on_floor = false
 var on_wall = false
 
 func _ready():
 	set_fixed_process(true)
 	set_process_input(true)
+
+	on_floor = false
+	go_to_state(S_FALL)
 	pass
 
 # INPUT 
@@ -74,15 +78,15 @@ func _fixed_process(delta):
 		exit_state = false
 		if previous_state == S_RUN and state == S_IDLE:
 			speed.x /= 4
-		elif previous_state == S_JUMP and state in [S_IDLE, S_RUN]:
+		elif previous_state == S_FALL and state in [S_IDLE, S_RUN]:
 			on_floor = true
 			on_wall = false
 			speed.y = 0.0
 	if enter_state:
+		enter_state = false
 		if state == S_JUMP:
 			on_floor = false
 			speed.y = -JUMP_IMPULSE
-		enter_state = false
 	
 	
 	# MOVEMENT HORIZONTAL ON FLOOR
@@ -94,6 +98,7 @@ func _fixed_process(delta):
 		direction = -1
 	
 	if on_floor:
+		# STATES
 		if jump:
 			go_to_state(S_JUMP)
 		elif moving:
@@ -101,14 +106,23 @@ func _fixed_process(delta):
 				go_to_state(S_RUN)
 		elif state == S_RUN:
 			go_to_state(S_IDLE)
+		
+		# SPEED X
+		speed.x = abs(speed.x)
+
 		if direction != prev_direction:
 			speed.x /= 2
+		
 		if state == S_RUN:
 			speed.x += ACCELERATION_X * delta
 		elif state == S_IDLE:
-			speed.x -= DECCELERATION_X * delta
-	
-	speed.x = clamp(speed.x, 0, MAX_SPEED)
+			if speed.x > STOP_THRESHOLD:
+				speed.x -= DECCELERATION_X * delta
+			else:
+				speed.x = 0
+		
+		speed.x *= direction
+		pass
 
 
 	# AIR MOTION
@@ -122,16 +136,19 @@ func _fixed_process(delta):
 
 	
 	# APPLYING MOVEMENT
-	velocity.x = speed.x * direction * delta
+	speed.x = clamp(speed.x, -MAX_SPEED, MAX_SPEED)
+	velocity.x = speed.x * delta
 	velocity.y = speed.y * delta
 	move(velocity)
 
 	if is_colliding():
+		print('collision')
+
 		var normal = get_collision_normal()
 		if not on_floor and normal == Vector2(0, -1):
 			go_to_state(S_IDLE)
 		
-		velocity = slide(velocity)
+		velocity = normal.slide(velocity)
 		velocity = move(velocity)
 	pass
 
