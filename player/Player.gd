@@ -76,7 +76,7 @@ func _ready():
 # INPUT 
 # State management based on input
 func _input(event):
-	jump_trigger = event.is_action_pressed("jump") and not event.is_echo()
+	jump_trigger = event.is_action_pressed("jump")
 	pass
 
 func _fixed_process(delta):
@@ -108,6 +108,8 @@ func _fixed_process(delta):
 		elif state == S_FALL:
 			on_floor = false
 			air_timer = 0.0
+			if previous_state == S_WALL:
+				speed.x = 0.0
 		elif state == S_WALL:
 			on_wall = true
 			speed.x = 0.0
@@ -115,7 +117,7 @@ func _fixed_process(delta):
 		elif state == S_WALL_JUMP:
 			on_wall = false
 			on_floor = false
-			jump_trigger = false
+			# jump_trigger = false
 			speed.x = wall_jump_direction * JUMP_IMPULSE_WALL.x
 			speed.y = JUMP_IMPULSE_WALL.y
 	
@@ -160,7 +162,6 @@ func _fixed_process(delta):
 			air_timer += delta
 			if air_timer <= AIR_THRESHOLD and jump:
 				go_to_state(S_JUMP)
-				# speed.y = -JUMP_IMPULSE
 		elif state in [S_JUMP, S_WALL_JUMP] and speed.y > 0.0:
 			go_to_state(S_FALL)
 		# X MOVEMENT
@@ -218,10 +219,11 @@ func _fixed_process(delta):
 		velocity = move(velocity)
 	elif state in S_FLOOR:
 		go_to_state(S_FALL)
-	elif state == S_WALL and moving and direction == wall_jump_direction:
+	elif state == S_WALL:
 		go_to_state(S_FALL)
 	pass
 
+	jump_trigger = false
 	if DEBUG_TIMER:
 		print(air_timer)
 
