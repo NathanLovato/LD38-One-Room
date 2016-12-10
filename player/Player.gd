@@ -1,7 +1,8 @@
 extends KinematicBody2D
 
-const DEBUG_STATE = false
-const DEBUG_INPUT = true
+const DEBUG_STATE = true
+const DEBUG_INPUT = false
+const DEBUG_TIMER = false
 const NAME = 'Player'
 
 # -------------
@@ -21,6 +22,9 @@ const S_FALL = 3
 const S_WALL = 5
 const S_DASH = 6
 
+const S_FLOOR = [S_IDLE, S_RUN]
+const S_AIR = [S_JUMP, S_FALL]
+
 # -------------
 # MOVEMENT
 # -------------
@@ -29,15 +33,16 @@ var prev_direction = 1
 var speed = Vector2(0.0,0.0)
 var velocity = Vector2(0.0,0.0)
 
+var air_timer = 0.0
+const AIR_THRESHOLD = 0.2
+
 const MAX_SPEED = 500
 const ACCELERATION_X = 2000
 const ACCELERATION_X_JUMP = 3000
-const DECCELERATION_X = 2000
-const SQRT_2 = Vector2(sqrt(2), sqrt(2))
+const FRICTION_FLOOR = 2000
 
-const JUMP_IMPULSE = 700
-const GRAVITY = 2000
-const FRICTION_FLOOR = 800
+const JUMP_IMPULSE = 1200
+const GRAVITY = 2600
 const FRICTION_WALL = 600
 const MAX_SPEED_FALL = 800
 const MAX_SPEED_JUMP = 800
@@ -78,15 +83,19 @@ func _fixed_process(delta):
 		exit_state = false
 		if previous_state == S_RUN and state == S_IDLE:
 			speed.x /= 4
-		elif previous_state == S_FALL and state in [S_IDLE, S_RUN]:
+		elif previous_state == S_FALL and state in S_FLOOR:
 			on_floor = true
 			on_wall = false
+			speed.x /= 2
 			speed.y = 0.0
 	if enter_state:
 		enter_state = false
 		if state == S_JUMP:
 			on_floor = false
 			speed.y = -JUMP_IMPULSE
+		elif state == S_FALL:
+			on_floor = false
+			air_timer = 0.0
 	
 	
 	# MOVEMENT HORIZONTAL ON FLOOR
@@ -98,6 +107,7 @@ func _fixed_process(delta):
 		direction = -1
 	
 	if on_floor:
+		speed.y = 0.0
 		# STATES
 		if jump:
 			go_to_state(S_JUMP)
@@ -117,22 +127,26 @@ func _fixed_process(delta):
 			speed.x += ACCELERATION_X * delta
 		elif state == S_IDLE:
 			if speed.x > STOP_THRESHOLD:
-				speed.x -= DECCELERATION_X * delta
+				speed.x -= FRICTION_FLOOR * delta
 			else:
 				speed.x = 0
 		
 		speed.x *= direction
-		pass
-
-
 	# AIR MOTION
-	if not on_floor and state in [S_JUMP, S_FALL]:
+	elif not on_floor:
+		if previous_state != S_JUMP and state == S_FALL:
+			air_timer += delta
+			if air_timer <= AIR_THRESHOLD and jump:
+				go_to_state(S_JUMP)
+				# speed.y = -JUMP_IMPULSE
+		elif state == S_JUMP and speed.y > 0.0:
+			go_to_state(S_FALL)
+		# X MOVEMENT
 		if moving:
 			speed.x += ACCELERATION_X_JUMP * direction * delta
-		speed.y += GRAVITY * delta
-		speed.y = clamp(speed.y, -MAX_SPEED_JUMP, MAX_SPEED_FALL)
-	if state == S_JUMP and speed.y < 0.0:
-		go_to_state(S_FALL)
+	
+	speed.y += GRAVITY * delta
+	speed.y = clamp(speed.y, -MAX_SPEED_JUMP, MAX_SPEED_FALL)
 
 	
 	# APPLYING MOVEMENT
@@ -141,16 +155,22 @@ func _fixed_process(delta):
 	velocity.y = speed.y * delta
 	move(velocity)
 
+	# COLLISIONS
 	if is_colliding():
-		print('collision')
-
 		var normal = get_collision_normal()
-		if not on_floor and normal == Vector2(0, -1):
+		var collision_with_floor = normal == Vector2(0, -1)
+
+		if not on_floor and collision_with_floor:
 			go_to_state(S_IDLE)
 		
 		velocity = normal.slide(velocity)
 		velocity = move(velocity)
+	elif state in S_FLOOR:
+		go_to_state(S_FALL)
 	pass
+
+	if DEBUG_TIMER:
+		print(air_timer)
 
 
 func go_to_state(new_state):
