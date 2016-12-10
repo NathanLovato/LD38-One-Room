@@ -1,7 +1,7 @@
-extends Node2D
+extends KinematicBody2D
 
-const DEBUG_STATE = false
-const DEBUG_INPUT = false
+const DEBUG_STATE = true
+const DEBUG_INPUT = true
 const NAME = 'Player'
 
 # -------------
@@ -26,10 +26,9 @@ const S_DASH = 6
 # -------------
 var direction = 1
 var speed = Vector2()
-var acceleration = Vector2()
 var velocity = Vector2()
-var max_speed = Vector2()
 
+const MAX_SPEED = 800
 const ACCELERATION_X = 1500
 const DECCELERATION_X = 1800
 const SQRT_2 = Vector2(sqrt(2), sqrt(2))
@@ -44,30 +43,38 @@ const MAX_SPEED_RUN = 800
 const MAX_SPEED_WALL_SLIDE = 200
 
 func _ready():
-	
+	set_fixed_process(true)
+	set_process_input(true)
 	pass
 
 # INPUT 
 # State management based on input
 func _input(event):
-	var test = event.is_action_pressed()
-	
-	var move_left = test("move_left")
-	var move_right = test("move_right")
-	var jump = test("jump")
-	var duck = test("duck")
-	
-	if event.is_echo():
-		if state == S_IDLE and move_left or move_right:
-			go_to_state(S_RUN)
+	var is_moving_left = event.is_action("move_left")
+	var is_moving_right = event.is_action("move_right")
+	var start_move_left = event.is_action_pressed("move_left")
+	var start_move_right = event.is_action_pressed("move_right")
 
-		if move_left:
-			direction = -1
-		elif move_right:
-			direction = 1
+	var is_moving = is_moving_left or is_moving_right or start_move_left or start_move_right
+	
+	var jump = event.is_action_pressed("jump")
+	var duck = event.is_action_pressed("duck")
+	
+	if DEBUG_INPUT and start_move_left or start_move_right or jump or duck:
+		print(event)
+
+	if state == S_IDLE and start_move_left or start_move_right:
+		go_to_state(S_RUN)
+	if state == S_RUN and not is_moving:
+		go_to_state(S_IDLE)
+
+	if start_move_left:
+		direction = -1
+	elif start_move_right:
+		direction = 1
 	pass
 
-func _process(delta):
+func _fixed_process(delta):
 	if exit_state:
 		exit_state = false
 	
@@ -76,10 +83,12 @@ func _process(delta):
 	
 	# MOVEMENT
 	if state == S_RUN:
-		speed.x += acceleration * delta
-		speed.x = clamp(speed, 0, max_speed)
-		pass
-	
+		speed.x += ACCELERATION_X * delta
+		speed.x = clamp(speed.x, 0, MAX_SPEED)
+	elif state == S_IDLE:
+		speed.x -= ACCELERATION_X * delta
+		speed.x = clamp(speed.x, 0, MAX_SPEED)
+
 	velocity = speed * direction * delta
 	move(velocity)
 
