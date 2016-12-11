@@ -67,15 +67,18 @@ func _process(delta):
             go_to_next_state()
     elif game_state == S_EXPLODE:
         print('BOOM')
+        var hit = false
         for danger_zone in active_danger_zones:
-            danger_zone.deactivate()
-            if danger_zone.bbox.has_point(player.get_pos()):
-                # player.queue_free()
-                # game_state = S_GAME_OVER
+            var test_rect = Rect2(danger_zone.get_pos(), danger_zone.bbox.size) 
+            if test_rect.has_point(player.get_pos()):
+                player.queue_free()
+                game_state = S_GAME_OVER
                 print("hit")
-                go_to_next_state()
-            else:
-                go_to_next_state()
+                hit = true
+        if hit:
+            game_state = S_GAME_OVER
+        else:
+            go_to_next_state()
         pass
     elif game_state == S_WAIT:
         timer -= delta
@@ -116,5 +119,7 @@ func go_to_next_state():
     if game_state == S_DANGER:
         timer = TIME_EXPLODE
     elif game_state == S_WAIT:
+        for danger_zone in all_danger_zones:
+            danger_zone.deactivate()
         score.update_score()
         timer = TIME_WAIT
