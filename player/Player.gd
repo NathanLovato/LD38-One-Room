@@ -5,10 +5,12 @@ const DEBUG_INPUT = false
 const DEBUG_TIMER = false
 const NAME = 'Player'
 
+var skin 
+
 # -------------
 # STATE MACHINE
 # -------------
-var state = S_IDLE
+var state = S_FALL
 var previous_state = S_IDLE
 var enter_state = false
 var exit_state = false
@@ -46,6 +48,7 @@ const MAX_SPEED = 500
 const ACCELERATION_X = 2000
 const ACCELERATION_X_JUMP = 3000
 const FRICTION_FLOOR = 2000
+const STOP_THRESHOLD = 30
 
 # const JUMP_IMPULSE = 400
 # const GRAVITY = 800
@@ -55,19 +58,17 @@ const GRAVITY = 2600
 const GRAVITY_WALL = 600
 const MAX_SPEED_FALL = 800
 const MAX_SPEED_FALL_WALL = 300
-const MAX_SPEED_JUMP = 800
-const STOP_THRESHOLD = 30
-
-const MAX_SPEED_WALK = 800
-const MAX_SPEED_RUN = 800
-
+const MAX_SPEED_JUMP = 900
 const MAX_SPEED_WALL_SLIDE = 200
 
+var jump
 var jump_trigger = false
 
 func _ready():
 	set_fixed_process(true)
 	set_process_input(true)
+
+	skin = get_node("Sprite")
 
 	on_floor = false
 	go_to_state(S_FALL)
@@ -77,6 +78,7 @@ func _ready():
 # State management based on input
 func _input(event):
 	jump_trigger = event.is_action_pressed("jump")
+	jump = event.is_action_pressed("jump")
 	pass
 
 func _fixed_process(delta):
@@ -85,7 +87,6 @@ func _fixed_process(delta):
 	var move_right = Input.is_action_pressed("move_right")
 	var moving = move_left or move_right
 
-	var jump = Input.is_action_pressed("jump")
 	var duck = Input.is_action_pressed("duck")
 
 	# ENTER AND EXIT STATE
@@ -127,8 +128,10 @@ func _fixed_process(delta):
 	prev_direction = direction
 	if move_right: 
 		direction = 1
+		skin.flip_h = false
 	elif move_left: 
 		direction = -1
+		skin.flip_h = true
 	
 	if on_floor:
 		speed.y = 0.0
@@ -199,6 +202,8 @@ func _fixed_process(delta):
 		var col_with_ceiling = normal == Vector2(0, 1)
 
 		# print(col_with_wall)
+		if col_with_ceiling and speed.y < 0:
+			speed.y = 0
 
 		if col_with_floor and not on_floor:
 			go_to_state(S_IDLE)
