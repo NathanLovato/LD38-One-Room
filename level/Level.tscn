@@ -17,5 +17,6 @@ transform/scale = Vector2( 0.25, 0.25 )
 
 transform/pos = Vector2( 640, 384 )
 
+[node name="Zones" type="Node2D" parent="."]
 
-[editable path="Score"]
+
