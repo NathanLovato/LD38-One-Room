@@ -31,12 +31,6 @@ func _ready():
 
 
 func _process(delta):
-	var test = Input.is_action_pressed("jump")
-	
-	if test:
-		update_score()
-		pass
-	
 	if exit_state:
 		exit_state = false
 		if previous_state == S_TIMER:

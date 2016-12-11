@@ -52,7 +52,7 @@ const STOP_THRESHOLD = 30
 
 # const JUMP_IMPULSE = 400
 # const GRAVITY = 800
-const JUMP_IMPULSE = 1200
+const JUMP_IMPULSE = 700
 const JUMP_IMPULSE_WALL = Vector2(400, -800)
 const GRAVITY = 2600
 const GRAVITY_WALL = 600
