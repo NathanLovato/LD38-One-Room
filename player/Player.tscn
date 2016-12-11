@@ -31,4 +31,18 @@ shape = SubResource( 1 )
 trigger = false
 _update_shape_index = 0
 
+[node name="Raycast_R" type="RayCast2D" parent="."]
+
+enabled = false
+cast_to = Vector2( 70, 0 )
+layer_mask = 1
+type_mask = 13
+
+[node name="Raycast_L" type="RayCast2D" parent="."]
+
+enabled = false
+cast_to = Vector2( -80, 0 )
+layer_mask = 1
+type_mask = 15
+
 

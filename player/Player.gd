@@ -61,6 +61,8 @@ const MAX_SPEED_FALL_WALL = 300
 const MAX_SPEED_JUMP = 900
 const MAX_SPEED_WALL_SLIDE = 200
 
+var rays = []
+
 var jump
 var jump_trigger = false
 
@@ -69,6 +71,9 @@ func _ready():
 	set_process_input(true)
 
 	skin = get_node("Sprite")
+
+	rays.append(get_node("Raycast_R"))
+	rays.append(get_node("Raycast_L"))
 
 	on_floor = false
 	go_to_state(S_FALL)
@@ -179,12 +184,13 @@ func _fixed_process(delta):
 
 
 	# GRAVITY and WALL FRICTION
-	if on_wall and state == S_WALL:
+	if on_wall:
 		gravity = GRAVITY_WALL
 	else: 
 		gravity = GRAVITY
 	speed.y += gravity * delta
 	speed.y = clamp(speed.y, -MAX_SPEED_JUMP, MAX_SPEED_FALL)
+
 	if speed.y > MAX_SPEED_FALL_WALL and state == S_WALL:
 		speed.y = MAX_SPEED_FALL_WALL
 	# APPLYING MOVEMENT
@@ -225,7 +231,13 @@ func _fixed_process(delta):
 	elif state in S_FLOOR:
 		go_to_state(S_FALL)
 	elif state == S_WALL:
-		go_to_state(S_FALL)
+		var next_to_wall = false
+		for ray in rays:
+			if ray.get_collider():
+				next_to_wall = true
+		if not next_to_wall:
+			go_to_state(S_FALL)
+
 	pass
 
 	jump_trigger = false
