@@ -1,4 +1,4 @@
-tool
+# tool
 extends Node
 
 var game_state = S_START
@@ -18,8 +18,8 @@ var danger_size = Vector2()
 
 # Gameplay generation
 var timer = 0.0
-const TIME_EXPLODE = 3.0
-const TIME_WAIT = 2.0
+const TIME_EXPLODE = 2.0
+const TIME_WAIT = 0.8
 
 var difficulty = 1
 const MAX_DANGER_ZONES = 3
@@ -32,7 +32,8 @@ onready var score = get_node("Score/Base")
 onready var danger_zone = preload("res://level/Danger.tscn")
 onready var danger_container = get_node("Zones") 
 
-var all_danger_zones
+var all_danger_zones = []
+var active_danger_zones = []
 
 
 func _ready():
@@ -55,7 +56,7 @@ func _ready():
 func _process(delta):
     if game_state == S_NEW_ROUND:
         var number = randi() % MAX_DANGER_ZONES
-        if number <= 0:
+        if number == 0:
             number = 1
 
         activate_danger_zones(number)
@@ -66,10 +67,15 @@ func _process(delta):
             go_to_next_state()
     elif game_state == S_EXPLODE:
         print('BOOM')
-        go_to_next_state()
-        # check if player in danger zone
-        # if so game over
-        # else add score and go back to play
+        for danger_zone in active_danger_zones:
+            danger_zone.deactivate()
+            if danger_zone.bbox.has_point(player.get_pos()):
+                # player.queue_free()
+                # game_state = S_GAME_OVER
+                print("hit")
+                go_to_next_state()
+            else:
+                go_to_next_state()
         pass
     elif game_state == S_WAIT:
         timer -= delta
@@ -82,14 +88,17 @@ func _process(delta):
 # Activates x of the DANGER_ZONE_COUNT danger zones
 func activate_danger_zones(number):
     # var zones_to_activate = []
+    active_danger_zones = []
     var used_indexes = []
-    var start_index = randi() % max_index
+    var start_index = randi() % DANGER_ZONE_COUNT
 
     for i in range(number):
-        var index = (i + start_index) % max_index
-        all_danger_zones[index].activate(TIME_EXPLODE)
+        var index = (i + start_index) % DANGER_ZONE_COUNT
+        var zone_to_activate = all_danger_zones[index]
+        zone_to_activate.activate()
+        active_danger_zones.append(zone_to_activate)
 
-
+# Used only for testing purposes, in the editor
 func test_danger_zones():
     if not get_tree().is_editor_hint():
         return false
@@ -107,4 +116,5 @@ func go_to_next_state():
     if game_state == S_DANGER:
         timer = TIME_EXPLODE
     elif game_state == S_WAIT:
+        score.update_score()
         timer = TIME_WAIT

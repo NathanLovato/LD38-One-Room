@@ -5,10 +5,17 @@ extends Node2D
 # Use encloses(), intersects() or has_point() to check overlap with the player
 var bbox = Rect2()
 var timeout = 0.0
+var color = Color(0.4, 0.5, 0.0)
+
+const ACTIVE_OPACITY = 0.3
+var target_opacity = 0.0
 
 func _draw():
-    var color = Color(0.0, 0.0, 0.0)
-    draw_zone_outline(color)
+    if get_tree().is_editor_hint():
+        draw_zone_outline(color)
+    else:
+        draw_rect(bbox, color)
+
 
 func draw_zone_outline( color ):
 	var points = Vector2Array()
@@ -28,15 +35,22 @@ func initialize(_position = Vector2(), _size = Vector2()):
     bbox = Rect2(Vector2(), _size)
     
     if get_tree().is_editor_hint():
-        update()
+        color = Color(0.0, 0.0, 0.0)
+
+func _ready():
+    set_opacity(0.0)
+    update()
 
 
-func activate(_timeout = 3.0):
-    timeout = _timeout
+func activate():
+    # timeout = _timeout
     set_process(true)
+    set_opacity(ACTIVE_OPACITY)
+
+func deactivate():
+    set_process(false)
+    set_opacity(0)
 
 
-func _process(delta):
-    timeout -= delta
-    if timeout < 0:
-        set_process(false)
+# func _process(delta):
+#     pass
