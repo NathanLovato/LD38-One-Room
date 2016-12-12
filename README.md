@@ -4,7 +4,7 @@ This is a platforming game example made to try out the Godot to API and to prepa
 
 ## The game
 
-![https://raw.githubusercontent.com/NathanLovato/LD38-One-Room/master/screenshot.png](Game screenshot)
+![Game screenshot](https://raw.githubusercontent.com/NathanLovato/LD38-One-Room/master/screenshot.png)
 
 The player sits in a room and has to get out of the areas that randomly appear to increase his score.
 
