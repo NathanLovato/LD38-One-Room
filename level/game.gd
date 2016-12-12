@@ -79,18 +79,14 @@ func _process(delta):
             game_state = S_GAME_OVER
         else:
             go_to_next_state()
-        pass
     elif game_state == S_WAIT:
         timer -= delta
         if timer < 0:
             go_to_next_state()
-        pass
-    pass
 
 
-# Activates x of the DANGER_ZONE_COUNT danger zones
 func activate_danger_zones(number):
-    # var zones_to_activate = []
+    # Randomly activates danger zones
     active_danger_zones = []
     var used_indexes = []
     var start_index = randi() % DANGER_ZONE_COUNT
@@ -100,13 +96,6 @@ func activate_danger_zones(number):
         var zone_to_activate = all_danger_zones[index]
         zone_to_activate.activate()
         active_danger_zones.append(zone_to_activate)
-
-# Used only for testing purposes, in the editor
-func test_danger_zones():
-    if not get_tree().is_editor_hint():
-        return false
-
-    create_danger_zone()
 
 
 func go_to_next_state():
