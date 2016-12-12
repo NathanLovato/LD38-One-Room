@@ -4,6 +4,8 @@ This is a platforming game example made to try out the Godot to API and to prepa
 
 ## The game
 
+![http://i63.tinypic.com/dxl1sz.png](Game screenshot)
+
 The player sits in a room and has to get out of the areas that randomly appear to increase his score.
 
 I didn't have time to refine the game at all, so the areas are purely randomly generated, making for rent and gameplay. It's lacking smarter patterns, i.e. using the player position to create zones to force him to move.
